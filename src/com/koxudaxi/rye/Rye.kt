@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.IndicatedProcessOutputListener
@@ -498,7 +497,7 @@ fun runRyeInBackground(module: Module, args: List<String>, @NlsSafe description:
             catch (e: RunCanceledByUserException) {
             }
             catch (e: ExecutionException) {
-                showSdkExecutionException(sdk, e, PyBundle.message("python.sdk.rye.execution.exception.error.running.rye.message"))
+                showSdkExecutionException(sdk, e, "Error Running Rye")
             }
             finally {
                 PythonSdkUtil.getSitePackagesDirectory(sdk)?.refresh(true, true)
