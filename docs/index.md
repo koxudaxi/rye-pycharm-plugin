@@ -7,8 +7,7 @@ See [documentation](https://koxudaxi.github.io/rye-pycharm-plugin/) for more det
 
 <!-- Plugin description -->
 ## Features
-- [ ] create new project without existing `pyproject.toml`
-- 
+- [ ]
 ## Screenshots
 
 <!-- Plugin description end -->
