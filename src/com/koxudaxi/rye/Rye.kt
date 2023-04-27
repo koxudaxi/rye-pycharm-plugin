@@ -452,7 +452,7 @@ class PyProjectTomlWatcher : EditorFactoryListener {
                     "#lock" ->
                         runRyeInBackground(module, listOf("lock"), "Locking lock file")
                     "#update" ->
-                        runRyeInBackground(module, listOf("--update-all"), "Updating Rye environment")
+                        runRyeInBackground(module, listOf("lock", "--update-all"), "Updating Rye environment")
                 }
                 notification.expire()
                 module.putUserData(notificationActive, null)
