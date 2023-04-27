@@ -49,7 +49,9 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
         }
 
         try {
-            runRye(sdk, *args.toTypedArray())
+            if (args.isNotEmpty()) {
+                runRye(sdk, *args.toTypedArray())
+            }
             runRye(sdk, "sync")
 
         }
@@ -100,7 +102,7 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
             val basePath = sdk.associatedModuleDir ?: return emptyList()
 
             ReadAction.run<Throwable> {
-                requirements = LOCK_FILES.mapNotNull { basePath.findChild(it)?.let { parseRequirements(it) } }.flatten()
+                requirements = LOCK_FILES.mapNotNull { basePath.findChild(it)?.let { parseRequirements(it) } }.flatten().distinct().toList()
             }
 
             val outputInstalledPackages = try {
@@ -111,7 +113,7 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
             }
             if (outputInstalledPackages is String) {
                 packages = parseRequirements(outputInstalledPackages)
-                    .mapNotNull { it.versionSpecs.firstOrNull()?.version?.let { version -> PyPackage(it.name, version) } }
+                    .mapNotNull { it.versionSpecs.firstOrNull()?.version?.let { version -> PyPackage(it.name, version, null, emptyList()) } }.distinct().toList()
             }
 
             ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)

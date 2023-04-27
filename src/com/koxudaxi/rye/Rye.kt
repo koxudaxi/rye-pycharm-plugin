@@ -395,12 +395,8 @@ class RyeInstallQuickFix : LocalQuickFix {
 class PyProjectTomlWatcher : EditorFactoryListener {
     private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
     private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-    private val content: @Nls String = if (ryeVersion?.let { it < "1.1.1" } == true) {
-        "Run <a href='#lock'>rye lock</a> or <a href='#update'>rye update</a>"
-    }
-    else {
-        "Run <a href='#lock'>rye lock</a>, <a href='#noupdate'>rye lock --no-update</a> or <a href='#update'>rye update</a>"
-    }
+    private val content: @Nls String = "Run <a href='#lock'>rye lock</a> or <a href='#update'>rye update</a>"
+
 
     override fun editorCreated(event: EditorFactoryEvent) {
         val project = event.editor.project
