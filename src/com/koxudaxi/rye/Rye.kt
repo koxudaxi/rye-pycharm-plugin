@@ -72,9 +72,11 @@ import java.util.regex.Pattern
 
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val RYE_LOCK: String = "requirements.lock"
+const val RYE_DEV_LOCK: String = "requirements-dev.lock"
 const val RYE_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 const val RYE_PATH_SETTING: String = "PyCharm.Rye.Path"
 
+val LOCK_FILES = listOf(RYE_LOCK, RYE_DEV_LOCK)
 // TODO: Provide a special icon for rye
 val RYE_ICON = PythonIcons.Python.Virtualenv
 
@@ -247,7 +249,6 @@ fun runRye(sdk: Sdk, vararg args: String): String {
     val projectPath = sdk.associatedModulePath
         ?: throw PyExecutionException("Cannot find the project associated with this Rye environment",
             "Rye", emptyList(), ProcessOutput())
-    runRye(projectPath, "env", "use", sdk.homePath!!)
     return runRye(projectPath, *args)
 }
 
@@ -394,12 +395,8 @@ class RyeInstallQuickFix : LocalQuickFix {
 class PyProjectTomlWatcher : EditorFactoryListener {
     private val changeListenerKey = Key.create<DocumentListener>("PyProjectToml.change.listener")
     private val notificationActive = Key.create<Boolean>("PyProjectToml.notification.active")
-    private val content: @Nls String = if (ryeVersion?.let { it < "1.1.1" } == true) {
-        "Run <a href='#lock'>rye lock</a> or <a href='#update'>rye update</a>"
-    }
-    else {
-        "Run <a href='#lock'>rye lock</a>, <a href='#noupdate'>rye lock --no-update</a> or <a href='#update'>rye update</a>"
-    }
+    private val content: @Nls String = "Run <a href='#lock'>rye lock</a> or <a href='#update'>rye update</a>"
+
 
     override fun editorCreated(event: EditorFactoryEvent) {
         val project = event.editor.project
@@ -450,11 +447,8 @@ class PyProjectTomlWatcher : EditorFactoryListener {
                 when (event.description) {
                     "#lock" ->
                         runRyeInBackground(module, listOf("lock"), "Locking lock file")
-                    "#noupdate" ->
-                        runRyeInBackground(module, listOf("lock", "--no-update"),
-                            "Locking lock file without updating")
                     "#update" ->
-                        runRyeInBackground(module, listOf("update"), "Updating Rye environment")
+                        runRyeInBackground(module, listOf("lock", "--update-all"), "Updating Rye environment")
                 }
                 notification.expire()
                 module.putUserData(notificationActive, null)
@@ -487,6 +481,9 @@ private val LOCK_NOTIFICATION_GROUP by lazy { NotificationGroupManager.getInstan
 
 private val Module.ryeLock: VirtualFile?
     get() = baseDir?.findChild(RYE_LOCK)
+
+private val Module.ryeDevLock: VirtualFile?
+    get() = baseDir?.findChild(RYE_DEV_LOCK)
 
 fun runRyeInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
     val task = object : Task.Backgroundable(module.project, StringUtil.toTitleCase(description), true) {
@@ -556,22 +553,7 @@ fun detectRyeEnvs(module: Module?, existingSdkPaths: Set<String>, projectPath: S
     }
 }
 
-fun getRyeEnv(projectPath: String): String =
-    FileUtil.join(projectPath, ".venv", "bin", "python")
-//    syncRunRye(projectPath, "env", "list", "--full-path", defaultResult = emptyList()) { result ->
-//        result.lineSequence().map { it.split(" ")[0] }.filterNot { it.isEmpty() }.toList()
-//    }
 
-
-fun isVirtualEnvsInProject(projectPath: String): Boolean? =
-    if (FileUtil.exists(projectPath)) {
-        syncRunRye(projectPath, "config", "virtualenvs.in-project", defaultResult = null) {
-            it.trim() == "true"
-        }
-    }
-    else {
-        false
-    }
 
 val ryeVersion: String?
     get() = syncRunRye(null, "--version", defaultResult = "") {

@@ -5,6 +5,7 @@ package com.koxudaxi.rye
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
@@ -38,20 +39,21 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     }
 
     override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
-        val args = if (requirements.isNullOrEmpty()) {
-            listOfNotNull(listOf("install"),
-                extraArgs)
-                .flatten()
-        }
-        else {
+        val args = if (!requirements.isNullOrEmpty()) {
             listOfNotNull(listOf("add"),
                 requirements.map { it.name },
                 extraArgs)
                 .flatten()
+        } else {
+            emptyList()
         }
 
         try {
-            runRye(sdk, *args.toTypedArray())
+            if (args.isNotEmpty()) {
+                runRye(sdk, *args.toTypedArray())
+            }
+            runRye(sdk, "sync")
+
         }
         finally {
             sdk.associatedModuleDir?.refresh(true, false)
@@ -64,6 +66,7 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
                 packages.map { it.name }
         try {
             runRye(sdk, *args.toTypedArray())
+            runRye(sdk, "sync")
         }
         finally {
             sdk.associatedModuleDir?.refresh(true, false)
@@ -95,26 +98,24 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
         if (alwaysRefresh || packages == null) {
             packages = null
-            val outputInstallDryRun = try {
-                runRye(sdk, "install", "--dry-run", "--no-root")
-            }
-            catch (e: ExecutionException) {
-                packages = emptyList()
-                return packages ?: emptyList()
-            }
-            val allPackage = parseRyeInstallDryRun(outputInstallDryRun)
-            packages = allPackage.first
-            requirements = allPackage.second
 
-            val outputOutdatedPackages = try {
-                runRye(sdk, "show", "--outdated")
+            val basePath = sdk.associatedModuleDir ?: return emptyList()
+
+            ReadAction.run<Throwable> {
+                requirements = LOCK_FILES.mapNotNull { basePath.findChild(it)?.let { parseRequirements(it) } }.flatten().distinct().toList()
+            }
+
+            val outputInstalledPackages = try {
+                runRye(sdk, "show", "--installed-deps")
             }
             catch (e: ExecutionException) {
-                outdatedPackages = emptyMap()
+                packages = listOf()
             }
-            if (outputOutdatedPackages is String) {
-                outdatedPackages = parseRyeShowOutdated(outputOutdatedPackages)
+            if (outputInstalledPackages is String) {
+                packages = parseRequirements(outputInstalledPackages)
+                    .mapNotNull { it.versionSpecs.firstOrNull()?.version?.let { version -> PyPackage(it.name, version, null, emptyList()) } }.distinct().toList()
             }
+
             ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
         }
         return packages ?: emptyList()
@@ -137,6 +138,7 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
         // TODO: Parse the dependency information from `pipenv graph`
         return emptySet()
     }
+
 
     private fun getVersion(version: String): String {
         return if (Regex("^[0-9]").containsMatchIn(version)) "==$version" else version
