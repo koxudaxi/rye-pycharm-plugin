@@ -200,7 +200,6 @@ class PyAddNewRyePanel(private val project: Project?,
         val addedRye = isRye[path] ?: return null
         if (addedRye.homeDirectory == null) return null
         // TODO: check existing envs
-        if (isVenvInProject(path) == false) return null
         val inProjectEnvExecutable = inProjectEnvPath?.let { computePythonExecutable(it) } ?: return null
         val inProjectEnv = homePath[inProjectEnvExecutable] ?: return null
         return ValidationInfo("Rye interpreter has been already added, select ''${inProjectEnv.name}''")
