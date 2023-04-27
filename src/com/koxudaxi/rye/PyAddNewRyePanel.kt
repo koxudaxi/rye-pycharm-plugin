@@ -189,7 +189,7 @@ class PyAddNewRyePanel(private val project: Project?,
     }
 
     private fun isVenvInProject(path: String): Boolean? {
-        return venvInProject.getOrPut(path) { isVirtualEnvsInProject(path) }
+        return venvInProject[path]
     }
 
     /**
