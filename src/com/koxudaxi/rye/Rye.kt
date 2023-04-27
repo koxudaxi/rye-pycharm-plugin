@@ -207,8 +207,10 @@ fun setupRyeSdkUnderProgress(project: Project?,
  */
 fun setupRye(projectPath: @SystemDependent String, python: String?, installPackages: Boolean, init: Boolean) {
     when {
-        init -> { runRye(projectPath, *listOf("init").toTypedArray())
-        runRye(projectPath, *listOf("sync").toTypedArray())
+        init -> {
+            runRye(projectPath, *listOf("init").toTypedArray())
+            runRye(projectPath, *listOf("add", "--dev", "setuptools").toTypedArray())
+            runRye(projectPath, *listOf("sync").toTypedArray())
         }
         installPackages -> {
             runRye(projectPath, *listOf("sync").toTypedArray())
