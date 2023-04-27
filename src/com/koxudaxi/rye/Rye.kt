@@ -626,9 +626,9 @@ fun getToolChains(): List<ToolChain>? =
              .mapNotNull { line ->
                  line.split(" ").let {
                      when (it.size) {
-                         1 -> return@mapNotNull ToolChain(it[0])
-                         2 -> return@mapNotNull ToolChain(it[0], it[1] == "(downloadable)")
-                         else -> return@mapNotNull null
+                         1 -> ToolChain(it[0])
+                         2 -> ToolChain(it[0], it[1] == "(downloadable)")
+                         else -> null
                      }
                  }
      }
