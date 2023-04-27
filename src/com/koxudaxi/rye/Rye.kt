@@ -615,7 +615,24 @@ fun parseRyeShowOutdated(input: String): Map<String, RyeOutdatedVersion> {
                 .takeIf { it.size > 3 }?.let { it[0] to RyeOutdatedVersion(it[1], it[2]) }
         }.toMap()
 }
-
+data class ToolChain(
+    val name: String,
+    val downloadable: Boolean = false,
+)
+fun getToolChains(): List<ToolChain>? =
+    syncRunRye(null, "toolchain", "list", "--include-downloadable", defaultResult = null) { result ->
+         result
+             .lines()
+             .mapNotNull { line ->
+                 line.split(" ").let {
+                     when (it.size) {
+                         1 -> ToolChain(it[0])
+                         2 -> ToolChain(it[0], it[1] == "(downloadable)")
+                         else -> null
+                     }
+                 }
+     }
+    }
 
 data class RyeOutdatedVersion(
     @SerializedName("currentVersion") var currentVersion: String,
