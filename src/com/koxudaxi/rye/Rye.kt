@@ -75,6 +75,7 @@ const val RYE_LOCK: String = "requirements.lock"
 const val RYE_DEV_LOCK: String = "requirements-dev.lock"
 const val RYE_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 const val RYE_PATH_SETTING: String = "PyCharm.Rye.Path"
+const val DUMP_SETUPTOOLS_VERSION: String = """import setuptools;print(setuptools.__version__)"""
 
 val LOCK_FILES = listOf(RYE_LOCK, RYE_DEV_LOCK)
 // TODO: Provide a special icon for rye
@@ -614,6 +615,17 @@ fun getToolChains(): List<ToolChain>? =
                      }
                  }
      }
+    }
+
+fun getSetuptoolsVersion(sdk: Sdk): String? =
+    try {
+        runRye(sdk, "run","python", "-c", DUMP_SETUPTOOLS_VERSION)
+    }
+    catch (e: PyExecutionException) {
+        null
+    }
+    catch (e: ProcessNotCreatedException) {
+        null
     }
 
 data class RyeOutdatedVersion(

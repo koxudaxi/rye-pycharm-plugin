@@ -112,8 +112,13 @@ class PyRyePackageManager(sdk: Sdk) : PyPackageManager(sdk) {
                 packages = listOf()
             }
             if (outputInstalledPackages is String) {
+                val additionalPackages = when (val setuptoolsVersion = getSetuptoolsVersion(sdk)) {
+                    // rye doesn't show setuptools by the command
+                    is String -> listOf(PyPackage("setuptools", setuptoolsVersion, null, emptyList()))
+                    else -> emptyList()
+                }
                 packages = parseRequirements(outputInstalledPackages)
-                    .mapNotNull { it.versionSpecs.firstOrNull()?.version?.let { version -> PyPackage(it.name, version, null, emptyList()) } }.distinct().toList() + listOf(PyPackage("setuptools", "67.7.2", null, emptyList())) // rye doesn't show setuptools by the command
+                    .mapNotNull { it.versionSpecs.firstOrNull()?.version?.let { version -> PyPackage(it.name, version, null, emptyList()) } }.distinct().toList() + additionalPackages
             }
 
             ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
