@@ -33,7 +33,7 @@ import com.jetbrains.python.sdk.add.addInterpretersAsync
 import java.awt.BorderLayout
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
-import kotlin.streams.toList
+
 
 
 /**

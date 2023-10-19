@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
@@ -53,17 +52,21 @@ import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
+import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.add.target.ValidationRequest
-import com.jetbrains.python.sdk.add.target.validateExecutableFile
+//import com.jetbrains.python.sdk.add.target.ValidationRequest
+//import com.jetbrains.python.sdk.add.target.validateExecutableFile
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.modules
 import icons.PythonIcons
 import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemDependent
+import org.jetbrains.builtInWebServer.PathInfo
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -146,12 +149,14 @@ fun getRyeExecutable(): File? =
     PropertiesComponent.getInstance().ryePath?.let { File(it) }?.takeIf { it.exists() } ?: detectRyeExecutable()
 
 fun validateRyeExecutable(ryeExecutable: @SystemDependent String?): ValidationInfo? =
-    validateExecutableFile(ValidationRequest(
+    validateExecutableFile(
+        ValidationRequest(
         path = ryeExecutable,
         fieldIsEmpty = "Rye executable is not found",
-        pathInfoProvider = PathInfo.localPathInfoProvider // TODO: pass real converter from targets when we support rye @ targets
+        platformAndRoot = PlatformAndRoot.local // TODO: pass real converter from targets when we support rye @ targets
 
-    ))
+        )
+    )
 
 fun suggestedSdkName(basePath: @NlsSafe String): @NlsSafe String = "Rye (${PathUtil.getFileName(basePath)})"
 

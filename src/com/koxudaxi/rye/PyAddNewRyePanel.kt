@@ -172,9 +172,8 @@ class PyAddNewRyePanel(private val project: Project?,
             ?: detectRyeExecutable()
             ?: return ValidationInfo("Rye executable is not found")
         return when {
-            !executable.exists() -> ValidationInfo(PyBundle.message("python.sdk.file.not.found", executable.absolutePath))
-            !Files.isExecutable(executable.toPath()) || !executable.isFile -> ValidationInfo(
-                PyBundle.message("python.sdk.cannot.execute", executable.absolutePath))
+            !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found")
+            !Files.isExecutable(executable.toPath()) || !executable.isFile -> ValidationInfo("Cannot execute ${executable.absolutePath}")
             else -> null
         }
     }
